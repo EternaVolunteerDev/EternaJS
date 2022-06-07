@@ -7,7 +7,7 @@ import Molecule from 'eterna/pose2D/Molecule';
 import BaseGlow from 'eterna/vfx/BaseGlow';
 import Toolbar, {ToolbarType} from 'eterna/ui/Toolbar';
 import PasteSequenceDialog from 'eterna/ui/PasteSequenceDialog';
-import EternaViewOptionsDialog, {EternaViewOptionsMode} from 'eterna/ui/EternaViewOptionsDialog';
+import EternaSettingsDialog, {EternaViewOptionsMode} from 'eterna/ui/EternaSettingsDialog';
 import PoseField from 'eterna/pose2D/PoseField';
 import PuzzleEditOp from 'eterna/pose2D/PuzzleEditOp';
 import Pose2D, {Layout} from 'eterna/pose2D/Pose2D';
@@ -46,7 +46,6 @@ import AnnotationManager, {
     AnnotationRange
 } from 'eterna/AnnotationManager';
 import AnnotationDialog from 'eterna/ui/AnnotationDialog';
-import EternaSettingsDialog from 'eterna/ui/EternaSettingsDialog';
 import CopyTextDialog from 'eterna/ui/CopyTextDialog';
 import FileInputObject, {HTMLInputEvent} from 'eterna/ui/FileInputObject';
 import Pose3D from 'eterna/pose3D/Pose3D';
@@ -230,11 +229,6 @@ export default class PuzzleEditMode extends GameMode {
         });
 
         this._toolbar.copyButton.clicked.connect(() => {
-            // Assert.assertIsDefined(this.modeStack);
-            // this.modeStack.pushMode(new CopyTextDialogMode(
-            //     this._poses[0].sequence.sequenceString(),
-            //     'Current Sequence'
-            // ));
             this.showDialog(new CopyTextDialog(this._poses[0].sequence.sequenceString(), 'Current Sequence'));
         });
 
@@ -611,17 +605,12 @@ export default class PuzzleEditMode extends GameMode {
 
         const menu = new ContextMenu({horizontal: false});
 
-        menu.addItem('Preferences').clicked.connect(() => this.showViewOptionsDialog());
+        menu.addItem('Preferences').clicked.connect(() => this.showSettingsDialog());
         menu.addItem('Reset').clicked.connect(() => this.promptForReset());
         menu.addItem('Copy Sequence').clicked.connect(() => this.showCopySequenceDialog());
         menu.addItem('Paste Sequence').clicked.connect(() => this.showPasteSequenceDialog());
 
         return menu;
-    }
-
-    protected showViewOptionsDialog() {
-        const dialog: EternaViewOptionsDialog = new EternaViewOptionsDialog(EternaViewOptionsMode.PUZZLEMAKER);
-        this.showDialog(dialog);
     }
 
     protected showSettingsDialog() {

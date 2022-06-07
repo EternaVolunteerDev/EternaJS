@@ -17,7 +17,7 @@ import Vienna from 'eterna/folding/Vienna';
 import {
     VAlign, HAlign, DisplayUtil, KeyboardEventType, KeyCode, Assert
 } from 'flashbang';
-import {EternaViewOptionsMode} from 'eterna/ui/EternaViewOptionsDialog';
+import EternaSettingsDialog, {EternaViewOptionsMode} from 'eterna/ui/EternaSettingsDialog';
 import SpecBoxDialog from 'eterna/ui/SpecBoxDialog';
 import Folder from 'eterna/folding/Folder';
 import Bitmaps from 'eterna/resources/Bitmaps';
@@ -30,7 +30,6 @@ import SecStruct from 'eterna/rnatypes/SecStruct';
 import Sequence from 'eterna/rnatypes/Sequence';
 import UITheme from 'eterna/ui/UITheme';
 import AnnotationManager from 'eterna/AnnotationManager';
-import EternaSettingsDialog from 'eterna/ui/EternaSettingsDialog';
 import ViewSolutionOverlay from './DesignBrowser/ViewSolutionOverlay';
 import GameMode from './GameMode';
 
@@ -86,10 +85,8 @@ export default class FeedbackViewMode extends GameMode {
 
         this._toolbar = new Toolbar(ToolbarType.FEEDBACK, {states: this._puzzle.getSecstructs().length}, {
             pairSwapButtonHandler: () => {
-                // console.log('pairSwapButtonHandler');
             },
             baseMarkerButtonHandler: () => {
-                // console.log('baseMarkerButtonHandler');
             },
             settingsButtonHandler: () => this.showSettingsDialog(),
             updateScriptViews: () => { this._resized.emit(); }
@@ -311,10 +308,6 @@ export default class FeedbackViewMode extends GameMode {
             HAlign.RIGHT, VAlign.TOP, 0 - this._solDialogOffset, 0
         );
     }
-
-    // private showViewOptionsDialog(): void {
-    //     this.showDialog(new EternaViewOptionsDialog(EternaViewOptionsMode.LAB));
-    // }
 
     private showSettingsDialog(): void {
         this.showDialog(new EternaSettingsDialog(EternaViewOptionsMode.LAB));

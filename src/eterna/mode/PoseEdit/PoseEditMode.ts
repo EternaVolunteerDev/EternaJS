@@ -268,7 +268,9 @@ export default class PoseEditMode extends GameMode {
 
         this._toolbar.pipButton.clicked.connect(() => this.togglePip());
 
-        this._toolbar.stateToggle.stateChanged.connect((targetIdx) => this.changeTarget(targetIdx));
+        if (this._toolbar.stateToggle) {
+            this._toolbar.stateToggle.stateChanged.connect((targetIdx) => this.changeTarget(targetIdx));
+        }
 
         this._toolbar.freezeButton.clicked.connect(() => this.toggleFreeze());
         this._toolbar.palette.targetClicked.connect((targetType) => this.onPaletteTargetSelected(targetType));
@@ -314,14 +316,6 @@ export default class PoseEditMode extends GameMode {
 
         this._toolbar.downloadSVGButton.clicked.connect(() => {
             this.downloadSVG();
-        });
-
-        this._toolbar.annotationPanelButton.toggled.connect((visible) => {
-            if (visible) {
-                this._toolbar.annotationPanel.isVisible = true;
-            } else {
-                this._toolbar.annotationPanel.isVisible = false;
-            }
         });
 
         // Add our docked SpecBox at the bottom of uiLayer
@@ -442,12 +436,15 @@ export default class PoseEditMode extends GameMode {
             this._toolbar.targetButton.display, HAlign.LEFT, VAlign.TOP,
             HAlign.LEFT, VAlign.TOP, w, h
         );
-        w += this._toolbar.targetButton.display.width;
-        DisplayUtil.positionRelativeToStage(
-            this._toolbar.stateToggle.display, HAlign.LEFT, VAlign.TOP,
-            HAlign.LEFT, VAlign.TOP, w,
-            h + (this._toolbar.targetButton.display.height - this._toolbar.stateToggle.display.height) / 2
-        );
+
+        if (this._toolbar.stateToggle) {
+            w += this._toolbar.targetButton.display.width;
+            DisplayUtil.positionRelativeToStage(
+                this._toolbar.stateToggle.display, HAlign.LEFT, VAlign.TOP,
+                HAlign.LEFT, VAlign.TOP, w,
+                h + (this._toolbar.targetButton.display.height - this._toolbar.stateToggle.display.height) / 2
+            );
+        }
 
         this._folderSwitcher.display.position.set(17, h + this._toolbar.targetButton.display.height + 20);
 
@@ -464,10 +461,6 @@ export default class PoseEditMode extends GameMode {
         this._dockedSpecBox.setSize(Flashbang.stageWidth - this._solDialogOffset, Flashbang.stageHeight - 340);
         const s: number = this._dockedSpecBox.plotSize;
         this._dockedSpecBox.setSize(s + 55, s * 2 + 51);
-
-        if (this._toolbar.annotationPanel.isVisible) {
-            this._toolbar.annotationPanel.updatePanelPosition();
-        }
     }
 
     public get toolbar(): Toolbar {
@@ -621,13 +614,8 @@ export default class PoseEditMode extends GameMode {
 
                 switchState: switchStateButton
                     ? [
-                        () => new Rectangle(
-                            this.toolbar.stateToggle.container.x + this.toolbar.container.x,
-                            this.toolbar.stateToggle.container.y + this.toolbar.container.y,
-                            this.toolbar.stateToggle.container.width,
-                            this.toolbar.stateToggle.container.height
-                        ),
-                        0, 'Switch state'
+                        () => getBounds(this.toolbar.stateToggle),
+                        -18, 'Switch state'
                     ]
                     : undefined,
 
@@ -1263,7 +1251,9 @@ export default class PoseEditMode extends GameMode {
         this._scriptInterface.addCallback('get_tracked_indices', (): number[] => this.getPose(0).trackedIndices);
         this._scriptInterface.addCallback('get_barcode_indices', (): number[] | null => this._puzzle.barcodeIndices);
         this._scriptInterface.addCallback('is_barcode_available',
-            (seq: string): boolean => SolutionManager.instance.checkRedundancyByHairpin(seq));
+            (seq: string): boolean => SolutionManager.instance.isHairpinUsed(
+                this._puzzle.getBarcodeHairpin(Sequence.fromSequenceString(seq)).sequenceString()
+            ));
 
         this._scriptInterface.addCallback('current_folder',
             (): string | null => (this._folder ? this._folder.name : null));
@@ -2295,18 +2285,16 @@ export default class PoseEditMode extends GameMode {
             return;
         }
 
-        const seqString = this._puzzle.transformSequence(undoBlock.sequence, 0).sequenceString;
+        const seq = this._puzzle.transformSequence(undoBlock.sequence, 0);
 
         if (data['error'] !== undefined) {
             log.debug(`Got solution submission error: ${data['error']}`);
             if (data['error'].indexOf('barcode') >= 0) {
                 const dialog = this.showNotification(data['error'], 'More Information');
                 dialog.extraButton.clicked.connect(() => window.open(EternaURL.BARCODE_HELP, '_blank'));
-                const hairpin: string | null = EPars.getBarcodeHairpin(seqString());
-                if (hairpin != null) {
-                    SolutionManager.instance.addHairpins([hairpin]);
-                    this.checkConstraints();
-                }
+                const hairpin = this._puzzle.getBarcodeHairpin(seq);
+                SolutionManager.instance.addHairpins([hairpin.sequenceString()]);
+                this.checkConstraints();
             } else {
                 this.showNotification(data['error']);
             }
@@ -2317,10 +2305,9 @@ export default class PoseEditMode extends GameMode {
                 this.setAncestorId(data['solution-id']);
             }
 
-            if (this._puzzle.puzzleType === PuzzleType.EXPERIMENTAL
-                && this._puzzle.useBarcode
-                && EPars.getBarcodeHairpin(seqString()) !== null) {
-                SolutionManager.instance.addHairpins([EPars.getBarcodeHairpin(seqString()) as string]);
+            if (this._puzzle.puzzleType === PuzzleType.EXPERIMENTAL && this._puzzle.useBarcode) {
+                const hairpin: Sequence | null = this._puzzle.getBarcodeHairpin(seq);
+                SolutionManager.instance.addHairpins([hairpin.sequenceString()]);
                 this.checkConstraints();
             }
         }
